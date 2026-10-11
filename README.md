@@ -1,6 +1,3 @@
-# llm-agent-security-toolkit
-基于大模型安全测试项目
-
 # LLM / Agent Security Testing Toolkit
 
 > 面向大语言模型与 Agent 应用的自动化安全测试工具包
@@ -81,7 +78,3 @@
 使用前请确认你已获得目标系统所有者的明确书面授权。
 
 ---
-
-## License
-
-MIT
