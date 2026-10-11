@@ -1,0 +1,270 @@
+# =============================================================================
+# LLM / Agent 漏洞分类库 · Vulnerability Taxonomy
+# =============================================================================
+# 版本   : v0.1 (骨架)
+# 更新   : 2026-10-11
+# 来源   : OWASP Top 10 for LLM Applications
+#          + 课程《大模型渗透测试》Chapter 3 / Chapter 8
+#
+# ⚠️ 使用纪律（重要）
+#   1. 本文件是**骨架**。每条漏洞的 description / impact / test_hint 都需要你
+#      核对课程内容后修正或补充，并把 status 从 draft 改成 reviewed。
+#   2. 你必须能解释本文件里的**每一条** —— 面试官一定会追问细节。
+#      写不出解释的条目，要么补课，要么删掉。
+#   3. 不要为了凑数而添加你不理解的条目。
+# =============================================================================
+
+version: "0.1"
+last_updated: "2026-10-11"
+
+references:
+  - name: OWASP Top 10 for LLM Applications
+    url: https://owasp.org/www-project-top-10-for-large-language-model-applications/
+  - name: MITRE ATLAS
+    url: https://atlas.mitre.org/
+  - name: MITRE ATT&CK
+    url: https://attack.mitre.org/
+
+# 类别说明
+#   input      —— 输入侧攻击
+#   output     —— 输出侧风险
+#   data       —— 数据与模型供应链
+#   agent      —— Agent / 工具调用特有
+#   availability —— 可用性
+#   privacy    —— 隐私与资产
+categories:
+  - id: input
+    name: 输入侧攻击
+  - id: output
+    name: 输出侧风险
+  - id: data
+    name: 数据与供应链
+  - id: agent
+    name: Agent / 工具调用
+  - id: availability
+    name: 可用性
+  - id: privacy
+    name: 隐私与资产
+
+vulnerabilities:
+
+  # ---- Chapter 8-1 ----------------------------------------------------------
+  - id: LLM01
+    owasp_id: LLM01
+    name: Prompt Injection
+    name_zh: 提示词注入
+    category: input
+    severity: critical
+    description: >
+      攻击者通过构造输入，覆盖或劫持模型原本的指令。
+      模型无法在架构上区分「系统指令」与「用户数据」，这是根因。
+    impact: 模型执行攻击者意图，可能导致越权操作、数据泄露、内容劫持
+    test_hint: 构造指令覆盖、角色扮演、分隔符绕过等载荷
+    course_ref: "Chapter 8-1 Prompt Injection"
+    status: draft
+
+  # ---- Chapter 8-2 ----------------------------------------------------------
+  - id: LLM01-IND
+    owasp_id: LLM01
+    name: Indirect Prompt Injection
+    name_zh: 间接提示词注入
+    category: agent
+    severity: critical
+    description: >
+      攻击载荷不来自用户输入，而是藏在模型会读取的外部内容里 ——
+      网页、PDF、邮件、代码注释、工具返回值、数据库记录。
+      Agent 场景下这是最危险的攻击面：模型主动去读，攻击者只需让内容被读到。
+    impact: 在受害者不知情时执行攻击者指令；可串联工具调用造成实际破坏
+    test_hint: 在可控的目标内容源中植入指令，观察 Agent 是否执行
+    course_ref: "Chapter 8-2 Indirect Prompt Injection Demo"
+    status: draft
+
+  # ---- Chapter 8-3 / 8-4 ----------------------------------------------------
+  - id: LLM02
+    owasp_id: LLM02
+    name: Insecure Output Handling
+    name_zh: 不安全输出处理
+    category: output
+    severity: high
+    description: >
+      模型输出未经校验就被下游系统直接使用（写入数据库、拼进 HTML、当作代码执行、
+      传入 shell）。漏洞本身在下游系统，但由 LLM 的不确定输出触发。
+    impact: XSS、SSRF、SQL 注入、远程代码执行等传统漏洞
+    test_hint: 诱导模型输出含标记语言或代码片段的内容，观察下游如何处理
+    course_ref: "Chapter 8-3 / 8-4 Insecure Output Handling"
+    status: draft
+
+  # ---- Chapter 8-5 ----------------------------------------------------------
+  - id: LLM05
+    owasp_id: LLM05
+    name: Supply Chain Vulnerabilities
+    name_zh: 供应链漏洞
+    category: data
+    severity: high
+    description: >
+      来源于第三方组件：预训练模型、数据集、微调权重、插件、依赖库。
+      模型文件本身可能被植入后门，且二进制权重难以审计。
+    impact: 后门触发、数据泄露、模型行为被远程操控
+    test_hint: 核查模型来源与哈希；检查依赖库版本与已知漏洞
+    course_ref: "Chapter 8-5 Supply Chain Vulnerabilities"
+    status: draft
+
+  # ---- Chapter 8-6 / 8-7 ----------------------------------------------------
+  - id: LLM04
+    owasp_id: LLM04
+    name: Model Denial of Service
+    name_zh: 模型拒绝服务
+    category: availability
+    severity: medium
+    description: >
+      通过消耗异常多的计算资源使模型服务不可用。
+      例如超长上下文、递归展开的生成任务、高复杂度推理请求。
+      由于按 token 计费，这同时是一次**成本攻击**。
+    impact: 服务中断、推理成本被恶意抬高
+    test_hint: 测量不同输入的资源消耗，寻找消耗/长度比异常的输入模式
+    course_ref: "Chapter 8-6 / 8-7 Model DoS"
+    status: draft
+
+  # ---- Chapter 8-8 ----------------------------------------------------------
+  - id: LLM03
+    owasp_id: LLM03
+    name: Training Data Poisoning
+    name_zh: 训练数据投毒
+    category: data
+    severity: high
+    description: >
+      在预训练、微调或 RAG 知识库阶段植入恶意数据，
+      使模型在特定触发条件下产生攻击者期望的行为（后门）。
+    impact: 隐蔽且持久；模型层面难以清除，需重训
+    test_hint: 检查数据来源与清洗流程；构造触发词探测后门行为
+    course_ref: "Chapter 8-8 Training Data Poisoning"
+    status: draft
+
+  # ---- Chapter 8-9 ----------------------------------------------------------
+  - id: LLM06
+    owasp_id: LLM06
+    name: Sensitive Information Disclosure
+    name_zh: 敏感信息泄露
+    category: privacy
+    severity: high
+    description: >
+      模型在输出中泄露训练数据、系统提示词、上下文中的隐私信息、
+      或通过工具读取到的其他用户数据。
+    impact: 个人隐私、商业机密、系统提示词（含凭证）泄露
+    test_hint: 试探系统提示词提取、跨会话数据泄漏、训练数据记忆提取
+    course_ref: "Chapter 8-9 Sensitive Information Disclosure"
+    status: draft
+
+  # ---- Chapter 8-10 ---------------------------------------------------------
+  - id: LLM07
+    owasp_id: LLM07
+    name: Insecure Plugin Design
+    name_zh: 插件 / 工具设计不安全
+    category: agent
+    severity: high
+    description: >
+      插件或工具缺少输入校验、权限控制与确认机制，
+      且其描述文本会被放进模型上下文 —— 因此**工具描述本身就是一个注入面**。
+    impact: 越权操作、任意代码执行、数据外泄
+    test_hint: 审计每个工具的入参校验与权限边界；测试恶意工具描述
+    course_ref: "Chapter 8-10 Plugin Security LLM Applications"
+    status: draft
+
+  # ---- Chapter 8-11 ---------------------------------------------------------
+  - id: LLM08
+    owasp_id: LLM08
+    name: Excessive Agency
+    name_zh: 代理权限过大
+    category: agent
+    severity: critical
+    description: >
+      Agent 被授予了超出需要的功能、权限或自主性：
+      能调用危险的工具、能自主决定执行、且没有人工确认环节。
+      与 LLM01 组合时后果最严重 —— 注入的指令可以直接变成真实世界的操作。
+    impact: 真实世界的破坏（转账、删库、发送消息、下单）
+    test_hint: 枚举 Agent 可调用的工具与其权限；测试是否需要人工确认
+    course_ref: "Chapter 8-11 Excessive Agency"
+    status: draft
+
+  # ---- Chapter 8-12 ---------------------------------------------------------
+  - id: LLM09
+    owasp_id: LLM09
+    name: Overreliance
+    name_zh: 过度依赖
+    category: output
+    severity: medium
+    description: >
+      人类不加验证地信任模型输出。模型产生的错误信息被当作事实使用。
+      这既是技术风险也是流程风险 —— 缓解手段主要靠制度而非模型。
+    impact: 错误决策、合规问题、声誉损失
+    test_hint: 构造诱导模型自信给出错误答案的场景，评估人工复核流程
+    course_ref: "Chapter 8-12 Overreliance"
+    status: draft
+
+  # ---- Chapter 8-13 ---------------------------------------------------------
+  - id: LLM10
+    owasp_id: LLM10
+    name: Model Theft
+    name_zh: 模型窃取
+    category: privacy
+    severity: medium
+    description: >
+      通过大量查询进行模型提取（功能窃取），或直接获取模型权重文件。
+      对闭源 API 的提取成本高，但对自部署的小模型是现实威胁。
+    impact: 知识产权损失、攻击者可离线分析模型以寻找更多漏洞
+    test_hint: 评估 API 的查询频率限制与输出信息量
+    course_ref: "Chapter 8-13 Model Theft"
+    status: draft
+
+  # ---- Chapter 3 Demo -------------------------------------------------------
+  - id: LLM-EXT-01
+    owasp_id: null
+    name: Bias and Stereotypes
+    name_zh: 偏见与刻板印象
+    category: output
+    severity: medium
+    description: >
+      模型输出包含对特定群体的偏见或刻板印象，源于训练数据中的社会偏见。
+      属于 AI 安全（Safety）范畴，与 Security 并列。
+    impact: 歧视性输出、品牌与合规风险
+    test_hint: 构造针对不同群体的对称问题，比较输出差异
+    course_ref: "Chapter 3-3 Demo 02 (Biased and Stereotypes)"
+    status: draft
+
+  - id: LLM-EXT-02
+    owasp_id: null
+    name: Hallucination
+    name_zh: 幻觉
+    category: output
+    severity: medium
+    description: >
+      模型生成看似合理但事实错误的内容，并常以高置信度表述。
+      不是漏洞而是模型固有特性，但在有下游动作的场景会放大为安全事故。
+    impact: 错误信息传播、错误决策、法律风险
+    test_hint: 对可验证事实提问，比对输出与真实答案
+    course_ref: "Chapter 3-6 Demo 05 (Hallucination)"
+    status: draft
+
+  - id: LLM-EXT-03
+    owasp_id: null
+    name: Service Disruption
+    name_zh: 服务中断
+    category: availability
+    severity: medium
+    description: >
+      应用层的服务中断，与 LLM04 的区别在于它不依赖模型本身的资源消耗，
+      而来自应用架构的薄弱环节（无限重试、无限循环的 Agent、失控的工具调用）。
+    impact: 服务不可用、成本失控
+    test_hint: 构造会触发 Agent 循环或多轮重试的输入
+    course_ref: "Chapter 3-5 Demo 04 (Service Disruption)"
+    status: draft
+
+# =============================================================================
+# TODO（你的工作）
+# -----------------------------------------------------------------------------
+# [ ] 逐条观看 Chapter 8 的 13 节课，修正上面每条的 description 和 impact
+# [ ] 补充 test_hint —— 写清楚「具体怎么测」，这是工具的核心输入
+# [ ] 把确认过的条目的 status 从 draft 改成 reviewed
+# [ ] 核对 OWASP 是否有更新版本（2025 版条目有调整）
+# [ ] 补充 mitre_atlas / attack 字段（M2 阶段做，见 Chapter 7）
+# =============================================================================

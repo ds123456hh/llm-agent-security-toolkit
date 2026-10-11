@@ -1,0 +1,8 @@
+# M1 阶段仅需要 YAML 解析
+PyYAML>=6.0
+
+# 后续里程碑启用（M3 / M4 再添加，现在不要装）：
+# requests          # LLM API 调用
+# python-dotenv     # 管理 API Key
+# playwright        # 浏览器类 Agent 测试
+# rich              # 报告美化输出

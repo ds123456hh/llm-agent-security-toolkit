@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# 虚拟环境
+.venv/
+venv/
+env/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 环境变量与密钥（绝不提交）
+.env
+.env.local
+.env.*.local
+*.key
+secrets.yaml
+
+# 测试与报告产物
+.pytest_cache/
+reports/
+*.log
+
+# 操作系统
+.DS_Store
+Thumbs.db
+desktop.ini
